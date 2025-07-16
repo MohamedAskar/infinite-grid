@@ -1,4 +1,8 @@
+import 'dart:ui';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:infinite_grid/infinite_grid.dart';
 
 void main() {
@@ -16,15 +20,13 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Infinite Grid Demo'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -32,13 +34,12 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   late final InfiniteGridController _controller;
-  String _currentPosition = '0.0, 0.0';
 
   @override
   void initState() {
     super.initState();
     _controller = InfiniteGridController(
-      layout: const GridLayout(cellSize: 100, spacing: 4),
+      layout: const GridLayout(cellSize: 120, spacing: 2),
     );
   }
 
@@ -50,75 +51,31 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Generate items for the grid
-    final items = List.generate(10000, (index) => index);
+    final width = MediaQuery.sizeOf(context).width;
+    final maxWidth = min(width, 360);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  'Infinite Grid',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Drag to scroll. Use buttons to jump to specific positions.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Position: $_currentPosition',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        _controller.animateToItem(0);
-                      },
-                      child: const Text('Go to Origin'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        _controller.jumpToItem(129);
-                      },
-                      child: const Text('Jump to Item 129'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        _controller.animateToItem(25);
-                      },
-                      child: const Text('Animate to Item 25'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Expanded(
+          GestureDetector(
+            onTap: () => FocusScope.of(context).unfocus(),
             child: InfiniteGrid.builder(
               controller: _controller,
-              itemCount: items.length,
-              cellBuilder: (_, config, index) =>
-                  SimpleNumberCell(config: config, item: index),
-              onPositionChanged: (position) {
-                setState(() {
-                  _currentPosition =
-                      '${position.dx.toStringAsFixed(1)}, ${position.dy.toStringAsFixed(1)}';
-                });
+              itemCount: 10000,
+              cellBuilder: (context, config, index) {
+                return ImageCell(key: ValueKey(index), index: index);
               },
+            ),
+          ),
+          SafeArea(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              constraints: BoxConstraints(maxWidth: maxWidth.toDouble()),
+              child: ItemNavigator(
+                onSubmitted: (value) {
+                  _controller.animateToItem(int.tryParse(value) ?? 0);
+                },
+              ),
             ),
           ),
         ],
@@ -127,41 +84,78 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class SimpleNumberCell extends StatelessWidget {
-  const SimpleNumberCell({super.key, required this.config, required this.item});
+class ImageCell extends StatelessWidget {
+  const ImageCell({super.key, required this.index});
 
-  final GridCellConfig config;
-  final int item;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade100, Colors.blue.shade300],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: Colors.blue, width: 2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.star, color: Colors.blue.shade700, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              '$item',
-              style: TextStyle(
-                color: Colors.blue.shade700,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+    return Image.network(
+      'https://picsum.photos/200/200?random=$index',
+      fit: BoxFit.cover,
+    );
+  }
+}
+
+class ItemNavigator extends StatefulWidget {
+  const ItemNavigator({super.key, required this.onSubmitted});
+
+  final ValueChanged<String> onSubmitted;
+
+  @override
+  State<ItemNavigator> createState() => _ItemNavigatorState();
+}
+
+class _ItemNavigatorState extends State<ItemNavigator> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final onSurface = theme.colorScheme.onSurface;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+              width: 1,
             ),
-            Text('${config.gridIndex}'),
-            Text('${config.position}'),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: TextFormField(
+            controller: controller,
+            style: theme.textTheme.titleMedium?.copyWith(color: onSurface),
+            decoration: InputDecoration(
+              hintText: 'Which item do you want to see?',
+              hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                color: onSurface.withValues(alpha: 0.8),
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onFieldSubmitted: widget.onSubmitted,
+          ),
         ),
       ),
     );
