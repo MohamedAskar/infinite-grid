@@ -10,6 +10,7 @@ A high-performance Flutter package that implements an infinite scrolling grid UI
 - **Programmatic Control**: Navigate to specific positions or items
 - **Type-Safe Items**: Strongly typed item support with automatic cycling
 - **Flexible Layout**: Configurable cell size and spacing
+- **Rectangular Cells**: Support for both square and rectangular cell dimensions
 - **Cross-Platform**: Works on iOS, Android, Web, and Desktop
 
 ## Quick Start
@@ -29,8 +30,18 @@ import 'package:infinite_grid/infinite_grid.dart';
 class MyWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    // Square cells
     final controller = InfiniteGridController(
       layout: const GridLayout(cellSize: 100, spacing: 4),
+    );
+    
+    // Or rectangular cells
+    final rectangularController = InfiniteGridController(
+      layout: const GridLayout.rectangular(
+        cellWidth: 120,
+        cellHeight: 80,
+        spacing: 4,
+      ),
     );
     
     final items = List.generate(50, (index) => 'Item $index');
@@ -38,7 +49,7 @@ class MyWidget extends StatelessWidget {
     return InfiniteGrid<String>(
       controller: controller,
       items: items,
-      cellBuilder: (config, item) => Container(
+      cellBuilder: (context, config, item) => Container(
         decoration: BoxDecoration(
           color: Colors.blue.shade100,
           border: Border.all(color: Colors.blue),
@@ -74,7 +85,7 @@ Creates a grid that cycles through the provided items infinitely.
 InfiniteGrid<T>({
   required InfiniteGridController controller,
   required List<T> items,
-  required Widget Function(GridCellConfig, T) cellBuilder,
+  required Widget Function(BuildContext, GridCellConfig, T) cellBuilder,
   GridPhysics? gridPhysics,
   void Function(Offset)? onPositionChanged,
   bool enableMomentumScrolling = false,
@@ -90,7 +101,7 @@ Creates a grid using a builder pattern, similar to ListView.builder.
 InfiniteGrid.builder({
   required InfiniteGridController controller,
   required int itemCount,
-  required Widget Function(BuildContext, int) itemBuilder,
+  required Widget Function(BuildContext, GridCellConfig, int) cellBuilder,
   GridPhysics? gridPhysics,
   void Function(Offset)? onPositionChanged,
   bool enableMomentumScrolling = false,
@@ -103,7 +114,7 @@ InfiniteGrid.builder({
 InfiniteGrid.builder(
   controller: controller,
   itemCount: 100,
-  itemBuilder: (context, index) => Container(
+  cellBuilder: (context, config, index) => Container(
     decoration: BoxDecoration(
       color: Colors.blue.shade100,
       border: Border.all(color: Colors.blue),
@@ -117,7 +128,7 @@ InfiniteGrid.builder(
 
 - **`controller`**: Controller for programmatic control and layout configuration
 - **`items`**: List of items to display in the grid (required)
-- **`cellBuilder`**: Builder function for creating cell widgets (receives config and item)
+- **`cellBuilder`**: Builder function for creating cell widgets (receives context, config, and item)
 - **`gridPhysics`**: Custom physics for scrolling behavior
 - **`onPositionChanged`**: Callback when grid position changes
 - **`enableMomentumScrolling`**: Enable/disable momentum scrolling (disabled by default)
@@ -131,7 +142,8 @@ Configuration object passed to the cell builder.
 class GridCellConfig {
   final int gridIndex;        // Unique cell index
   final Point<int> position;  // Grid coordinates
-  final double cellSize;      // Size of the cell
+  final double cellWidth;     // Width of the cell
+  final double cellHeight;    // Height of the cell
   final Offset globalPosition; // Global position in widget
 }
 ```
@@ -186,13 +198,23 @@ Creates a controller starting at a specific item index. The initial position is 
 Layout configuration for the grid:
 
 ```dart
+// Square cells
 const GridLayout({
   required double cellSize,
   double spacing = 0.0,
 })
+
+// Rectangular cells
+const GridLayout.rectangular({
+  required double cellWidth,
+  required double cellHeight,
+  double spacing = 0.0,
+})
 ```
 
-- **`cellSize`**: Size of each cell in logical pixels
+- **`cellSize`**: Size of each cell in logical pixels (for square cells)
+- **`cellWidth`**: Width of each cell in logical pixels (for rectangular cells)
+- **`cellHeight`**: Height of each cell in logical pixels (for rectangular cells)
 - **`spacing`**: Space between cells in logical pixels
 
 ### GridPhysics
@@ -277,7 +299,7 @@ class _InfiniteGridDemoState extends State<InfiniteGridDemo> {
             child: InfiniteGrid<String>(
               controller: _controller,
               items: items,
-              cellBuilder: (config, item) => Container(
+              cellBuilder: (context, config, item) => Container(
                 decoration: BoxDecoration(
                   color: Colors.blue.shade100,
                   border: Border.all(color: Colors.blue),

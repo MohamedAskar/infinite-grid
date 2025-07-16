@@ -7,7 +7,17 @@ class GridCellConfig {
   const GridCellConfig({
     required this.gridIndex,
     required this.position,
-    required this.cellSize,
+    required double cellSize,
+    required this.globalPosition,
+  }) : cellWidth = cellSize,
+       cellHeight = cellSize;
+
+  /// Creates a new grid cell configuration with rectangular cells.
+  const GridCellConfig.rectangular({
+    required this.gridIndex,
+    required this.position,
+    required this.cellWidth,
+    required this.cellHeight,
     required this.globalPosition,
   });
 
@@ -17,8 +27,11 @@ class GridCellConfig {
   /// The position of this cell in the grid coordinate system.
   final math.Point<int> position;
 
-  /// The size of each cell in logical pixels.
-  final double cellSize;
+  /// The width of this cell in logical pixels.
+  final double cellWidth;
+
+  /// The height of this cell in logical pixels.
+  final double cellHeight;
 
   /// The global position of this cell in the widget coordinate system.
   final Offset globalPosition;
@@ -29,11 +42,12 @@ class GridCellConfig {
     return other is GridCellConfig &&
         other.gridIndex == gridIndex &&
         other.position == position &&
-        other.cellSize == cellSize &&
+        other.cellWidth == cellWidth &&
+        other.cellHeight == cellHeight &&
         other.globalPosition == globalPosition;
   }
 
   @override
   int get hashCode =>
-      Object.hash(gridIndex, position, cellSize, globalPosition);
+      Object.hash(gridIndex, position, cellWidth, cellHeight, globalPosition);
 }

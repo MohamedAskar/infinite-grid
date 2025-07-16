@@ -10,9 +10,6 @@ import 'infinite_grid_controller.dart';
 typedef InfiniteGridItemBuilder<T> =
     Widget Function(BuildContext context, GridCellConfig config, T item);
 
-typedef InfiniteGridIndexBuilder =
-    Widget Function(BuildContext context, GridCellConfig config, int index);
-
 /// A high-performance infinite scrolling grid widget with momentum-based scrolling.
 ///
 /// The grid cycles through the provided items infinitely, repeating them when
@@ -37,26 +34,23 @@ class InfiniteGrid<T> extends StatefulWidget {
   /// Creates a new infinite grid using a builder pattern.
   ///
   /// Similar to [ListView.builder], this constructor takes an [itemCount] and
-  /// an [itemBuilder] function that creates widgets for each index.
+  /// a [cellBuilder] function that creates widgets for each index.
   /// The grid will cycle through indices 0 to [itemCount-1] infinitely.
-  static InfiniteGrid<int> builder({
+  static InfiniteGrid builder({
     Key? key,
     required InfiniteGridController controller,
     required int itemCount,
-    required Widget Function(BuildContext context, int index) itemBuilder,
+    required InfiniteGridItemBuilder<int> cellBuilder,
     GridPhysics? gridPhysics,
     void Function(Offset position)? onPositionChanged,
     bool enableMomentumScrolling = false,
     int preloadCells = 2,
   }) {
-    // Create a list of indices from 0 to itemCount-1
-    final List<int> indices = List.generate(itemCount, (index) => index);
-
     return InfiniteGrid<int>(
       key: key,
       controller: controller,
-      items: indices,
-      cellBuilder: (context, config, index) => itemBuilder(context, index),
+      items: List.generate(itemCount, (index) => index),
+      cellBuilder: cellBuilder,
       gridPhysics: gridPhysics,
       onPositionChanged: onPositionChanged,
       enableMomentumScrolling: enableMomentumScrolling,
@@ -71,8 +65,7 @@ class InfiniteGrid<T> extends StatefulWidget {
   /// Builder function for creating cell widgets.
   ///
   /// Receives the grid cell configuration and the actual item for this cell.
-  final Widget Function(BuildContext context, GridCellConfig config, T item)
-  cellBuilder;
+  final InfiniteGridItemBuilder<T> cellBuilder;
 
   /// Controller for programmatic control and layout configuration.
   final InfiniteGridController controller;
@@ -279,29 +272,31 @@ class _InfiniteGridState<T> extends State<InfiniteGrid<T>>
     if (layout == null) {
       throw StateError(
         'GridLayout must be set on the controller before using the grid. '
-        'Set controller.layout = GridLayout(cellSize: ..., spacing: ...)',
+        'Set controller.layout = GridLayout(cellSize: ..., spacing: ...) or GridLayout.rectangular(cellWidth: ..., cellHeight: ..., spacing: ...)',
       );
     }
 
-    final effectiveCellSize = layout.effectiveCellSize;
+    final effectiveCellWidth = layout.effectiveCellWidth;
+    final effectiveCellHeight = layout.effectiveCellHeight;
 
     // Calculate how many cells fit in the viewport (with buffer for smooth scrolling)
     final cellsX =
-        (viewportSize.width / effectiveCellSize).ceil() +
+        (viewportSize.width / effectiveCellWidth).ceil() +
         (widget.preloadCells * 2);
     final cellsY =
-        (viewportSize.height / effectiveCellSize).ceil() +
+        (viewportSize.height / effectiveCellHeight).ceil() +
         (widget.preloadCells * 2);
 
     // Calculate the starting cell position based on current grid position
     // Account for cell size by considering that cells occupy space from their position
     // to position + cellSize, so we need to offset by half the cell size
     final startX =
-        ((-_currentPosition.dx - (viewportSize.width / 2)) / effectiveCellSize)
+        ((-_currentPosition.dx - (viewportSize.width / 2)) / effectiveCellWidth)
             .floor() -
         widget.preloadCells;
     final startY =
-        ((-_currentPosition.dy - (viewportSize.height / 2)) / effectiveCellSize)
+        ((-_currentPosition.dy - (viewportSize.height / 2)) /
+                effectiveCellHeight)
             .floor() -
         widget.preloadCells;
 
@@ -311,23 +306,24 @@ class _InfiniteGridState<T> extends State<InfiniteGrid<T>>
         final gridIndex = _calculateGridIndex(x, y);
         final position = math.Point<int>(x, y);
         final globalPosition = Offset(
-          x * effectiveCellSize +
+          x * effectiveCellWidth +
               _currentPosition.dx +
               (viewportSize.width / 2) -
-              (layout.cellSize / 2),
-          y * effectiveCellSize +
+              (layout.cellWidth / 2),
+          y * effectiveCellHeight +
               _currentPosition.dy +
               (viewportSize.height / 2) -
-              (layout.cellSize / 2),
+              (layout.cellHeight / 2),
         );
 
         // Only add cells that are actually visible (with some buffer)
         if (_isCellVisible(globalPosition, viewportSize)) {
           visibleCells.add(
-            GridCellConfig(
+            GridCellConfig.rectangular(
               gridIndex: gridIndex,
               position: position,
-              cellSize: layout.cellSize,
+              cellWidth: layout.cellWidth,
+              cellHeight: layout.cellHeight,
               globalPosition: globalPosition,
             ),
           );
@@ -408,11 +404,12 @@ class _InfiniteGridState<T> extends State<InfiniteGrid<T>>
     final layout = widget.controller.layout;
     if (layout == null) return false;
 
-    final margin = widget.preloadCells * layout.effectiveCellSize;
-    return cellPosition.dx + layout.cellSize >= -margin &&
-        cellPosition.dx <= viewportSize.width + margin &&
-        cellPosition.dy + layout.cellSize >= -margin &&
-        cellPosition.dy <= viewportSize.height + margin;
+    final marginX = widget.preloadCells * layout.effectiveCellWidth;
+    final marginY = widget.preloadCells * layout.effectiveCellHeight;
+    return cellPosition.dx + layout.cellWidth >= -marginX &&
+        cellPosition.dx <= viewportSize.width + marginX &&
+        cellPosition.dy + layout.cellHeight >= -marginY &&
+        cellPosition.dy <= viewportSize.height + marginY;
   }
 
   /// Creates a cell builder function that cycles through the provided items.
@@ -421,18 +418,7 @@ class _InfiniteGridState<T> extends State<InfiniteGrid<T>>
       final items = widget.items;
       final itemCount = items.length;
 
-      // Handle empty items list
-      if (itemCount == 0) {
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.grey.shade100,
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: const Center(
-            child: Icon(Icons.help_outline, color: Colors.grey),
-          ),
-        );
-      }
+      if (itemCount == 0) return const SizedBox.shrink();
 
       // Calculate the actual item index
       final gridIndex = config.gridIndex;
@@ -503,8 +489,8 @@ class _GridCellWidget extends StatelessWidget {
     return Positioned(
       left: config.globalPosition.dx,
       top: config.globalPosition.dy,
-      width: config.cellSize,
-      height: config.cellSize,
+      width: config.cellWidth,
+      height: config.cellHeight,
       child: RepaintBoundary(child: builder(config)),
     );
   }

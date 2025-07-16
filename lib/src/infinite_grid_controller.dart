@@ -61,7 +61,7 @@ class InfiniteGridController extends ChangeNotifier {
     if (_layout == null) {
       throw StateError(
         'GridLayout must be set before using item-aware methods. '
-        'Set controller.layout = GridLayout(cellSize: ..., spacing: ...)',
+        'Set controller.layout = GridLayout(cellSize: ..., spacing: ...) or GridLayout.rectangular(cellWidth: ..., cellHeight: ..., spacing: ...)',
       );
     }
   }
@@ -170,8 +170,8 @@ class InfiniteGridController extends ChangeNotifier {
     _ensureLayoutSet();
     return _layout!.gridPositionToItemIndex(
       math.Point<int>(
-        (-_position.dx / _layout!.effectiveCellSize).round(),
-        (-_position.dy / _layout!.effectiveCellSize).round(),
+        (-_position.dx / _layout!.effectiveCellWidth).round(),
+        (-_position.dy / _layout!.effectiveCellHeight).round(),
       ),
     );
   }

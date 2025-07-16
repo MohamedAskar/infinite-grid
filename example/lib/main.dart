@@ -108,11 +108,11 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
           Expanded(
-            child: InfiniteGrid<int>(
+            child: InfiniteGrid.builder(
               controller: _controller,
-              items: items,
-              cellBuilder: (_, config, item) =>
-                  SimpleNumberCell(config: config, item: item),
+              itemCount: items.length,
+              cellBuilder: (_, config, index) =>
+                  SimpleNumberCell(config: config, item: index),
               onPositionChanged: (position) {
                 setState(() {
                   _currentPosition =

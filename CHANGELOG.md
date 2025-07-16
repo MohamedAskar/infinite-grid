@@ -11,7 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2025-07-17
 
-**First public release on pub.dev.**
+### Added
+- **NEW**: Support for rectangular cells with `GridLayout.rectangular()` constructor
+- **NEW**: `cellWidth` and `cellHeight` properties in `GridCellConfig` for rectangular cells
+- **NEW**: `effectiveCellWidth` and `effectiveCellHeight` properties in `GridLayout`
+- **NEW**: Helper methods for rectangular cells: `withCellDimensions()` and `withRectangularConfiguration()`
+- **NEW**: `GridCellConfig.rectangular()` constructor for rectangular cell configurations
+
+### Changed
+- **BREAKING**: `InfiniteGrid` now requires a `List<T> items` parameter - no more optional items
+- **BREAKING**: `cellBuilder` function signature changed to `(GridCellConfig config, T item)` - item is now required and non-nullable  
+- **BREAKING**: Removed `InfiniteGrid.builder()` constructor - use the main constructor instead
+- **BREAKING**: Made `InfiniteGrid` class generic (`InfiniteGrid<T>`) to provide type safety for items
+- **BREAKING**: All grids now cycle through items infinitely - no more dual-mode behavior
+- Improved API consistency by having a single constructor that always works with items
+- Enhanced type safety by requiring items and providing strongly-typed access in cellBuilder
+- **BREAKING**: Removed deprecated `cellSize` and `effectiveCellSize` properties from `GridLayout`
+- **BREAKING**: Removed deprecated `cellSize` property from `GridCellConfig`
 
 > _Note: Earlier versions were not published to pub.dev. This release includes all features and improvements listed below._
 

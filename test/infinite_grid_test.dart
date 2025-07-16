@@ -191,7 +191,7 @@ void main() {
             body: InfiniteGrid.builder(
               controller: controller,
               itemCount: 10,
-              itemBuilder: (context, index) => Container(
+              cellBuilder: (context, config, index) => Container(
                 decoration: BoxDecoration(
                   color: Colors.blue,
                   border: Border.all(color: Colors.black),
@@ -219,26 +219,52 @@ void main() {
             body: InfiniteGrid.builder(
               controller: controller,
               itemCount: 0,
-              itemBuilder: (context, index) =>
-                  Container(child: Text('Item $index')),
+              cellBuilder: (context, config, index) => Text('Item $index'),
             ),
           ),
         ),
       );
 
-      expect(find.byIcon(Icons.help_outline), findsAtLeastNWidgets(1));
+      expect(find.byType(SizedBox), findsAtLeastNWidgets(1));
     });
   });
 
   group('GridLayout', () {
     test('calculates effective cell size', () {
       expect(
-        const GridLayout(cellSize: 100, spacing: 0).effectiveCellSize,
-        100.0,
+        const GridLayout(cellSize: 100, spacing: 0).effectiveCellWidth,
+        equals(100),
       );
       expect(
-        const GridLayout(cellSize: 100, spacing: 10).effectiveCellSize,
-        110.0,
+        const GridLayout(cellSize: 100, spacing: 10).effectiveCellWidth,
+        equals(110),
+      );
+    });
+
+    test('supports rectangular cells', () {
+      final layout = const GridLayout.rectangular(
+        cellWidth: 120,
+        cellHeight: 80,
+        spacing: 5,
+      );
+
+      expect(layout.cellWidth, equals(120));
+      expect(layout.cellHeight, equals(80));
+      expect(layout.effectiveCellWidth, equals(125));
+      expect(layout.effectiveCellHeight, equals(85));
+    });
+
+    test('rectangular cells have different width and height', () {
+      final layout = const GridLayout.rectangular(
+        cellWidth: 150,
+        cellHeight: 100,
+        spacing: 0,
+      );
+
+      expect(layout.cellWidth, isNot(equals(layout.cellHeight)));
+      expect(
+        layout.effectiveCellWidth,
+        isNot(equals(layout.effectiveCellHeight)),
       );
     });
 

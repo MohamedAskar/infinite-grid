@@ -4,17 +4,34 @@ import 'package:flutter/painting.dart';
 
 /// Immutable layout calculator for grid item positioning and conversions.
 class GridLayout {
-  /// Creates a new grid layout with the specified cell size and spacing.
-  const GridLayout({required this.cellSize, required this.spacing});
+  /// Creates a new grid layout with square cells.
+  ///
+  /// For rectangular cells, use [GridLayout.rectangular].
+  const GridLayout({required double cellSize, required this.spacing})
+    : cellWidth = cellSize,
+      cellHeight = cellSize;
 
-  /// The size of each cell in the grid.
-  final double cellSize;
+  /// Creates a new grid layout with rectangular cells.
+  const GridLayout.rectangular({
+    required this.cellWidth,
+    required this.cellHeight,
+    required this.spacing,
+  });
+
+  /// The width of each cell in the grid.
+  final double cellWidth;
+
+  /// The height of each cell in the grid.
+  final double cellHeight;
 
   /// The spacing between cells in the grid.
   final double spacing;
 
-  /// The effective cell size including spacing.
-  double get effectiveCellSize => cellSize + spacing;
+  /// The effective cell width including spacing.
+  double get effectiveCellWidth => cellWidth + spacing;
+
+  /// The effective cell height including spacing.
+  double get effectiveCellHeight => cellHeight + spacing;
 
   /// Converts a linear item index to grid coordinates (x, y).
   ///
@@ -152,30 +169,59 @@ class GridLayout {
   Offset calculateItemWorldPosition(int itemIndex) {
     final gridPos = itemIndexToGridPosition(itemIndex);
 
-    return Offset(gridPos.x * effectiveCellSize, gridPos.y * effectiveCellSize);
+    return Offset(
+      gridPos.x * effectiveCellWidth,
+      gridPos.y * effectiveCellHeight,
+    );
   }
 
   /// Gets the item index at the given world position.
   int getItemIndexAtWorldPosition(Offset worldPosition) {
-    final gridX = (worldPosition.dx / effectiveCellSize).round();
-    final gridY = (worldPosition.dy / effectiveCellSize).round();
+    final gridX = (worldPosition.dx / effectiveCellWidth).round();
+    final gridY = (worldPosition.dy / effectiveCellHeight).round();
 
     return gridPositionToItemIndex(math.Point<int>(gridX, gridY));
   }
 
-  /// Creates a new layout with different cell size.
+  /// Creates a new layout with different cell size (for square cells).
   GridLayout withCellSize(double cellSize) {
     return GridLayout(cellSize: cellSize, spacing: spacing);
   }
 
+  /// Creates a new layout with different cell dimensions (for rectangular cells).
+  GridLayout withCellDimensions(double cellWidth, double cellHeight) {
+    return GridLayout.rectangular(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      spacing: spacing,
+    );
+  }
+
   /// Creates a new layout with different spacing.
   GridLayout withSpacing(double spacing) {
+    return GridLayout.rectangular(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      spacing: spacing,
+    );
+  }
+
+  /// Creates a new layout with different cell size and spacing (for square cells).
+  GridLayout withConfiguration(double cellSize, double spacing) {
     return GridLayout(cellSize: cellSize, spacing: spacing);
   }
 
-  /// Creates a new layout with different cell size and spacing.
-  GridLayout withConfiguration(double cellSize, double spacing) {
-    return GridLayout(cellSize: cellSize, spacing: spacing);
+  /// Creates a new layout with different cell dimensions and spacing (for rectangular cells).
+  GridLayout withRectangularConfiguration(
+    double cellWidth,
+    double cellHeight,
+    double spacing,
+  ) {
+    return GridLayout.rectangular(
+      cellWidth: cellWidth,
+      cellHeight: cellHeight,
+      spacing: spacing,
+    );
   }
 
   @override
@@ -183,12 +229,19 @@ class GridLayout {
       identical(this, other) ||
       other is GridLayout &&
           runtimeType == other.runtimeType &&
-          cellSize == other.cellSize &&
+          cellWidth == other.cellWidth &&
+          cellHeight == other.cellHeight &&
           spacing == other.spacing;
 
   @override
-  int get hashCode => cellSize.hashCode ^ spacing.hashCode;
+  int get hashCode => Object.hash(cellWidth, cellHeight, spacing);
 
   @override
-  String toString() => 'GridLayout(cellSize: $cellSize, spacing: $spacing)';
+  String toString() {
+    if (cellWidth == cellHeight) {
+      return 'GridLayout(cellSize: $cellWidth, spacing: $spacing)';
+    } else {
+      return 'GridLayout.rectangular(cellWidth: $cellWidth, cellHeight: $cellHeight, spacing: $spacing)';
+    }
+  }
 }
