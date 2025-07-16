@@ -1,0 +1,22 @@
+name: infinite_grid
+description: A high-performance Flutter package for infinite scrolling grids with direct drag control, optional momentum scrolling, and automatic viewport optimization.
+version: 1.1.0
+homepage: https://github.com/MohamedAskar/infinite-grid
+repository: https://github.com/MohamedAskar/infinite-grid
+issue_tracker: https://github.com/MohamedAskar/infinite-grid/issues
+
+environment:
+  sdk: ^3.8.1
+  flutter: ">=1.17.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
