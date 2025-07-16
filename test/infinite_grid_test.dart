@@ -179,6 +179,57 @@ void main() {
     });
   });
 
+  group('InfiniteGrid.builder', () {
+    testWidgets('creates grid with builder pattern', (tester) async {
+      final controller = InfiniteGridController(
+        layout: const GridLayout(cellSize: 100, spacing: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InfiniteGrid.builder(
+              controller: controller,
+              itemCount: 10,
+              itemBuilder: (context, index) => Container(
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  border: Border.all(color: Colors.black),
+                ),
+                child: Center(child: Text('Item $index')),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Since it's an infinite grid, items repeat, so we expect at least one
+      expect(find.text('Item 0'), findsAtLeastNWidgets(1));
+      expect(find.text('Item 1'), findsAtLeastNWidgets(1));
+    });
+
+    testWidgets('handles empty builder', (tester) async {
+      final controller = InfiniteGridController(
+        layout: const GridLayout(cellSize: 100, spacing: 0),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: InfiniteGrid.builder(
+              controller: controller,
+              itemCount: 0,
+              itemBuilder: (context, index) =>
+                  Container(child: Text('Item $index')),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.help_outline), findsAtLeastNWidgets(1));
+    });
+  });
+
   group('GridLayout', () {
     test('calculates effective cell size', () {
       expect(

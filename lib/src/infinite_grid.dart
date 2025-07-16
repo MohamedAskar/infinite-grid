@@ -7,6 +7,12 @@ import 'grid_cell_config.dart';
 import 'grid_physics.dart';
 import 'infinite_grid_controller.dart';
 
+typedef InfiniteGridItemBuilder<T> =
+    Widget Function(BuildContext context, GridCellConfig config, T item);
+
+typedef InfiniteGridIndexBuilder =
+    Widget Function(BuildContext context, GridCellConfig config, int index);
+
 /// A high-performance infinite scrolling grid widget with momentum-based scrolling.
 ///
 /// The grid cycles through the provided items infinitely, repeating them when
@@ -20,13 +26,43 @@ class InfiniteGrid<T> extends StatefulWidget {
   const InfiniteGrid({
     super.key,
     required this.controller,
-    required this.items,
+    this.items = const [],
     required this.cellBuilder,
     this.gridPhysics,
     this.onPositionChanged,
     this.enableMomentumScrolling = false,
     this.preloadCells = 2,
   });
+
+  /// Creates a new infinite grid using a builder pattern.
+  ///
+  /// Similar to [ListView.builder], this constructor takes an [itemCount] and
+  /// an [itemBuilder] function that creates widgets for each index.
+  /// The grid will cycle through indices 0 to [itemCount-1] infinitely.
+  static InfiniteGrid<int> builder({
+    Key? key,
+    required InfiniteGridController controller,
+    required int itemCount,
+    required Widget Function(BuildContext context, int index) itemBuilder,
+    GridPhysics? gridPhysics,
+    void Function(Offset position)? onPositionChanged,
+    bool enableMomentumScrolling = false,
+    int preloadCells = 2,
+  }) {
+    // Create a list of indices from 0 to itemCount-1
+    final List<int> indices = List.generate(itemCount, (index) => index);
+
+    return InfiniteGrid<int>(
+      key: key,
+      controller: controller,
+      items: indices,
+      cellBuilder: (context, config, index) => itemBuilder(context, index),
+      gridPhysics: gridPhysics,
+      onPositionChanged: onPositionChanged,
+      enableMomentumScrolling: enableMomentumScrolling,
+      preloadCells: preloadCells,
+    );
+  }
 
   /// List of items to display in the grid.
   /// Items will repeat infinitely as the user scrolls.
@@ -384,6 +420,19 @@ class _InfiniteGridState<T> extends State<InfiniteGrid<T>>
     return (GridCellConfig config) {
       final items = widget.items;
       final itemCount = items.length;
+
+      // Handle empty items list
+      if (itemCount == 0) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: const Center(
+            child: Icon(Icons.help_outline, color: Colors.grey),
+          ),
+        );
+      }
 
       // Calculate the actual item index
       final gridIndex = config.gridIndex;

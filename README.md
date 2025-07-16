@@ -82,6 +82,37 @@ InfiniteGrid<T>({
 })
 ```
 
+### InfiniteGrid.builder
+
+Creates a grid using a builder pattern, similar to ListView.builder.
+
+```dart
+InfiniteGrid.builder({
+  required InfiniteGridController controller,
+  required int itemCount,
+  required Widget Function(BuildContext, int) itemBuilder,
+  GridPhysics? gridPhysics,
+  void Function(Offset)? onPositionChanged,
+  bool enableMomentumScrolling = false,
+  int preloadCells = 2,
+})
+```
+
+**Example:**
+```dart
+InfiniteGrid.builder(
+  controller: controller,
+  itemCount: 100,
+  itemBuilder: (context, index) => Container(
+    decoration: BoxDecoration(
+      color: Colors.blue.shade100,
+      border: Border.all(color: Colors.blue),
+    ),
+    child: Center(child: Text('Item $index')),
+  ),
+)
+```
+
 #### Properties
 
 - **`controller`**: Controller for programmatic control and layout configuration
