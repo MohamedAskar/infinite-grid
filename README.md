@@ -2,6 +2,12 @@
 
 A high-performance Flutter package that implements an infinite scrolling grid UI with direct drag control, optional momentum scrolling, and automatic viewport optimization.
 
+## Demo
+
+![InfiniteGrid Demo](https://github.com/user-attachments/assets/1d69ed8b-5aad-46e3-8919-d31d2f2c4642)
+
+Or try the [live web demo](https://mohamedaskar.github.io/infinite-grid/).
+
 ## Features
 
 - **High Performance**: Optimized rendering with cell preloading and efficient viewport culling
