@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.2] - 2025-07-19
 
+
 ### Fixed
 - **pub.dev Compatibility**: Fixed README assets display issues
   - Replaced GitHub user-attachments URLs with local assets
