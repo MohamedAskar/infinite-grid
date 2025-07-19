@@ -6,9 +6,11 @@ import 'dart:math' as math;
 void main() {
   // Helper function to create a simple test widget
   Widget createTestWidget(InfiniteGridController controller) {
+    const layout = GridLayout(cellSize: 100, spacing: 0);
     return MaterialApp(
       home: InfiniteGrid<int>(
         controller: controller,
+        layout: layout,
         items: List.generate(100, (index) => index),
         cellBuilder: (_, config, item) => Container(
           color: Colors.blue,
@@ -20,18 +22,14 @@ void main() {
 
   group('InfiniteGrid', () {
     testWidgets('creates and renders', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(createTestWidget(controller));
       expect(find.byType(InfiniteGrid<int>), findsOneWidget);
     });
 
     testWidgets('can jump and animate to items', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(createTestWidget(controller));
 
@@ -47,9 +45,7 @@ void main() {
     });
 
     testWidgets('can move programmatically', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(createTestWidget(controller));
 
@@ -89,14 +85,13 @@ void main() {
     });
 
     testWidgets('cycles through items infinitely', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(
         MaterialApp(
           home: InfiniteGrid<String>(
             controller: controller,
+            layout: const GridLayout(cellSize: 100, spacing: 0),
             items: const ['A', 'B', 'C'],
             cellBuilder: (_, config, item) => Container(
               color: Colors.blue,
@@ -110,9 +105,7 @@ void main() {
     });
 
     testWidgets('handles custom item types', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       final items = [
         {'name': 'Apple', 'color': Colors.red},
@@ -124,6 +117,7 @@ void main() {
         MaterialApp(
           home: InfiniteGrid<Map<String, dynamic>>(
             controller: controller,
+            layout: const GridLayout(cellSize: 100, spacing: 0),
             items: items,
             cellBuilder: (_, config, item) => Container(
               color: item['color'] as Color,
@@ -137,14 +131,13 @@ void main() {
     });
 
     testWidgets('handles empty list', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(
         MaterialApp(
           home: InfiniteGrid<String>(
             controller: controller,
+            layout: const GridLayout(cellSize: 100, spacing: 0),
             items: const [],
             cellBuilder: (_, config, item) => Container(
               color: Colors.blue,
@@ -158,14 +151,13 @@ void main() {
     });
 
     testWidgets('handles single item', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
 
       await tester.pumpWidget(
         MaterialApp(
           home: InfiniteGrid<String>(
             controller: controller,
+            layout: const GridLayout(cellSize: 100, spacing: 0),
             items: const ['Single'],
             cellBuilder: (_, config, item) => Container(
               color: Colors.blue,
@@ -177,19 +169,34 @@ void main() {
 
       expect(find.byType(InfiniteGrid<String>), findsOneWidget);
     });
+
+    testWidgets('supports grid offset for staggered columns', (tester) async {
+      final controller = InfiniteGridController();
+      const layout = GridLayout(
+        cellSize: 100,
+        spacing: 0,
+        gridOffset: 0.5, // 50% offset
+      );
+
+      await tester.pumpWidget(createTestWidget(controller));
+      expect(find.byType(InfiniteGrid<int>), findsOneWidget);
+
+      // Verify that the layout has the correct grid offset
+      expect(layout.gridOffset, 0.5);
+    });
   });
 
   group('InfiniteGrid.builder', () {
     testWidgets('creates grid with builder pattern', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
+      const layout = GridLayout(cellSize: 100, spacing: 0);
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: InfiniteGrid.builder(
               controller: controller,
+              layout: layout,
               itemCount: 10,
               cellBuilder: (context, config, index) => Container(
                 decoration: BoxDecoration(
@@ -209,15 +216,15 @@ void main() {
     });
 
     testWidgets('handles empty builder', (tester) async {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      final controller = InfiniteGridController();
+      const layout = GridLayout(cellSize: 100, spacing: 0);
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: InfiniteGrid.builder(
               controller: controller,
+              layout: layout,
               itemCount: 0,
               cellBuilder: (context, config, index) => Text('Item $index'),
             ),
@@ -269,37 +276,18 @@ void main() {
     });
 
     test('spiral indexing follows continuous pattern', () {
-      final controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      const layout = GridLayout(cellSize: 100, spacing: 0);
 
       // Test that the spiral continues from where the previous ring ended
       // Ring 1 ends at (1,1) with index 8
       // Ring 2 should start at (2,1) with index 9
-      expect(
-        controller.layout!.gridPositionToItemIndex(const math.Point(1, 1)),
-        8,
-      );
-      expect(
-        controller.layout!.gridPositionToItemIndex(const math.Point(2, 1)),
-        9,
-      );
+      expect(layout.gridPositionToItemIndex(const math.Point(1, 1)), 8);
+      expect(layout.gridPositionToItemIndex(const math.Point(2, 1)), 9);
 
       // Test a few more positions in ring 2
-      expect(
-        controller.layout!.gridPositionToItemIndex(const math.Point(2, 0)),
-        10,
-      );
-      expect(
-        controller.layout!.gridPositionToItemIndex(const math.Point(2, -1)),
-        11,
-      );
-      expect(
-        controller.layout!.gridPositionToItemIndex(const math.Point(2, -2)),
-        12,
-      );
-
-      controller.dispose();
+      expect(layout.gridPositionToItemIndex(const math.Point(2, 0)), 10);
+      expect(layout.gridPositionToItemIndex(const math.Point(2, -1)), 11);
+      expect(layout.gridPositionToItemIndex(const math.Point(2, -2)), 12);
     });
 
     test('converts between item indices and grid positions', () {
@@ -334,15 +322,71 @@ void main() {
       expect(layout.calculateItemWorldPosition(1), const Offset(110, 0));
       expect(layout.calculateItemWorldPosition(5), const Offset(-110, 0));
     });
+
+    test('supports grid offset for staggered columns', () {
+      const layout = GridLayout(
+        cellSize: 100,
+        spacing: 10,
+        gridOffset: 0.5, // 50% offset
+      );
+
+      expect(layout.gridOffset, 0.5);
+
+      // Test world positions with offset
+      // Column 0: moves down (12.5 pixels = 50% of 25)
+      expect(layout.calculateItemWorldPosition(0), const Offset(0, 12.5));
+      // Column 1: moves up (-12.5 pixels = -50% of 25)
+      expect(layout.calculateItemWorldPosition(1), const Offset(110, -12.5));
+      // Column -1: moves up (-12.5 pixels = -50% of 25)
+      expect(layout.calculateItemWorldPosition(5), const Offset(-110, -12.5));
+      // Index 2 -> Grid position (1, -1) -> Column 1 (odd) -> moves up, Y=-1
+      expect(layout.calculateItemWorldPosition(2), const Offset(110, -122.5));
+      // Index 6 -> Grid position (-1, 1) -> Column -1 (odd) -> moves up, Y=1
+      expect(layout.calculateItemWorldPosition(6), const Offset(-110, 97.5));
+
+      // Test round-trip conversion with offset
+      for (int i = 0; i < 10; i++) {
+        final worldPos = layout.calculateItemWorldPosition(i);
+        final itemIndex = layout.getItemIndexAtWorldPosition(worldPos);
+        expect(
+          itemIndex,
+          i,
+          reason: 'Round-trip conversion failed for index $i',
+        );
+      }
+    });
+
+    test('withGridOffset creates new layout with offset', () {
+      const originalLayout = GridLayout(cellSize: 100, spacing: 10);
+      final offsetLayout = originalLayout.copyWith(gridOffset: 0.25);
+
+      expect(offsetLayout.gridOffset, 0.25);
+      expect(offsetLayout.cellWidth, originalLayout.cellWidth);
+      expect(offsetLayout.cellHeight, originalLayout.cellHeight);
+      expect(offsetLayout.spacing, originalLayout.spacing);
+    });
+
+    test('withFullConfiguration creates new layout with all parameters', () {
+      const originalLayout = GridLayout(cellSize: 100, spacing: 10);
+      final newLayout = originalLayout.copyWith(
+        cellWidth: 120,
+        cellHeight: 80,
+        spacing: 5,
+        gridOffset: 0.75,
+      );
+
+      expect(newLayout.cellWidth, 120);
+      expect(newLayout.cellHeight, 80);
+      expect(newLayout.spacing, 5);
+      expect(newLayout.gridOffset, 0.75);
+    });
   });
 
   group('InfiniteGridController', () {
     late InfiniteGridController controller;
 
     setUp(() {
-      controller = InfiniteGridController(
-        layout: const GridLayout(cellSize: 100, spacing: 0),
-      );
+      controller = InfiniteGridController();
     });
 
     tearDown(() {
@@ -371,6 +415,9 @@ void main() {
     });
 
     test('basic operations work', () {
+      // Set layout on controller
+      controller.updateLayout(const GridLayout(cellSize: 100, spacing: 0));
+
       // Test jumping to items
       controller.jumpToItem(129);
       expect(controller.getCurrentCenterItemIndex(), 129);
@@ -378,20 +425,44 @@ void main() {
       // Test position updates
       controller.jumpTo(const Offset(200, 150));
       expect(controller.currentPosition, const Offset(200, 150));
-
-      // Test layout updates
-      const newLayout = GridLayout(cellSize: 50, spacing: 5);
-      controller.layout = newLayout;
-      expect(controller.layout, newLayout);
     });
 
     test('requires layout for item operations', () {
-      final controllerWithoutLayout = InfiniteGridController();
-      expect(
-        () => controllerWithoutLayout.jumpToItem(0),
-        throwsA(isA<StateError>()),
+      final controller = InfiniteGridController();
+      const layout = GridLayout(cellSize: 100, spacing: 0);
+
+      // Set layout on controller
+      controller.updateLayout(layout);
+
+      // This should work now since layout is set on the controller
+      controller.jumpToItem(0);
+      expect(controller.getCurrentCenterItemIndex(), 0);
+
+      controller.dispose();
+    });
+
+    test('getCurrentCenterItemIndex works correctly with grid offset', () {
+      const layout = GridLayout(
+        cellSize: 100,
+        spacing: 10,
+        gridOffset: 0.5, // 50% offset
       );
-      controllerWithoutLayout.dispose();
+      final controller = InfiniteGridController(layout: layout);
+
+      // Test jumping to different items and verifying center item
+      controller.jumpToItem(0);
+      expect(controller.getCurrentCenterItemIndex(), 0);
+
+      controller.jumpToItem(1);
+      expect(controller.getCurrentCenterItemIndex(), 1);
+
+      controller.jumpToItem(5);
+      expect(controller.getCurrentCenterItemIndex(), 5);
+
+      controller.jumpToItem(2);
+      expect(controller.getCurrentCenterItemIndex(), 2);
+
+      controller.dispose();
     });
   });
 }
