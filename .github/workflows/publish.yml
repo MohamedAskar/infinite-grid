@@ -1,5 +1,7 @@
 name: Publish to pub.dev
 
+# This workflow publishes to pub.dev when a version tag is pushed
+# Tags should only be created from the main branch to ensure proper publishing
 on:
   push:
     tags:
@@ -10,4 +12,3 @@ jobs:
     permissions:
       id-token: write # Required for authentication using OIDC
     uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-
