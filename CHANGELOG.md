@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.2] - 2025-07-19
+## [1.2.3] 
 
+### Fixed
+  - Fixed CHANGELOG.md file
+
+## [1.2.2] 
 
 ### Fixed
 - **pub.dev Compatibility**: Fixed README assets display issues
@@ -15,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed image loading on pub.dev package page
   - Improved README display across all platforms
 
-## [1.2.1] - 2025-07-19
+## [1.2.1] 
 
 ### Added
 - **GitHub Actions CI/CD**: Automated pull request validation
@@ -29,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated demo section with side-by-side comparisons
   - Better showcase of grid offset and scrolling features
 
-## [1.2.0] - 2025-07-19
+## [1.2.0] 
 
 ### Added
 - **Grid Offset Feature**: Staggered column effects for masonry-style layouts
@@ -61,11 +65,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 > _Note: Earlier versions were not published to pub.dev. This release includes all features and improvements listed below._
 
-## [1.1.1] - 2025-07-17
+## [1.1.1] 
 
 - Added a demo section to the README.
 
-## [1.1.0] - 2025-07-17
+## [1.1.0] 
 
 ### Added
 - **NEW**: Support for rectangular cells with `GridLayout.rectangular()` constructor
