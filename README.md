@@ -1,12 +1,25 @@
 # Infinite Grid
 
+[![pub package](https://img.shields.io/pub/v/infinite_grid.svg)](https://pub.dev/packages/infinite_grid)
+
 A high-performance Flutter package that implements an infinite scrolling grid UI with direct drag control, optional momentum scrolling, and automatic viewport optimization.
 
 ## Demo
 
-![InfiniteGrid Demo](https://github.com/user-attachments/assets/1d69ed8b-5aad-46e3-8919-d31d2f2c4642)
+### Layout Comparison
+**Default Layout** | **Grid Offset Layout**
+---|---|---
+![Default Layout](https://github.com/user-attachments/assets/29da54aa-18aa-431b-9519-953c40124ba3) | ![Grid Offset Layout](https://github.com/user-attachments/assets/4008a878-2f90-443f-ab95-655e22cf3ce9)
 
-Or try the [live web demo](https://mohamedaskar.github.io/infinite-grid/).
+
+### Scrolling Comparison
+**Normal Scrolling** | **Momentum Scrolling**
+---|---|---
+![Normal Scrolling](https://github.com/user-attachments/assets/16a8df38-afe9-45c5-bbc9-9c0b5d620533) | ![Momentum Scrolling](https://github.com/user-attachments/assets/89d5bd2c-32e9-488e-a230-8236bd8ac527)
+
+
+### Live Demo
+You can try the [live web demo](https://mohamedaskar.github.io/infinite-grid/).
 
 ## Features
 
@@ -16,6 +29,7 @@ Or try the [live web demo](https://mohamedaskar.github.io/infinite-grid/).
 - **Programmatic Control**: Navigate to specific positions or items
 - **Type-Safe Items**: Strongly typed item support with automatic cycling
 - **Flexible Layout**: Configurable cell size and spacing
+- **Grid Offset**: Staggered column effect with configurable offset
 - **Rectangular Cells**: Support for both square and rectangular cell dimensions
 - **Cross-Platform**: Works on iOS, Android, Web, and Desktop
 
@@ -36,24 +50,27 @@ import 'package:infinite_grid/infinite_grid.dart';
 class MyWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Square cells
-    final controller = InfiniteGridController(
-      layout: const GridLayout(cellSize: 100, spacing: 4),
-    );
+    // Create controller
+    final controller = InfiniteGridController();
     
-    // Or rectangular cells
-    final rectangularController = InfiniteGridController(
-      layout: const GridLayout.rectangular(
-        cellWidth: 120,
-        cellHeight: 80,
-        spacing: 4,
-      ),
+    // Create layouts
+    final squareLayout = const GridLayout(cellSize: 100, spacing: 4);
+    final rectangularLayout = const GridLayout.rectangular(
+      cellWidth: 120,
+      cellHeight: 80,
+      spacing: 4,
+    );
+    final offsetLayout = const GridLayout(
+      cellSize: 100,
+      spacing: 4,
+      gridOffset: 0.5, // 50% offset
     );
     
     final items = List.generate(50, (index) => 'Item $index');
 
     return InfiniteGrid<String>(
       controller: controller,
+      layout: squareLayout,
       items: items,
       cellBuilder: (context, config, item) => Container(
         decoration: BoxDecoration(
@@ -69,6 +86,20 @@ class MyWidget extends StatelessWidget {
 ```
 
 ## Usage Examples
+
+```dart
+// Create controller and layout
+final controller = InfiniteGridController();
+final layout = GridLayout(cellSize: 100, spacing: 4);
+
+// Set layout on controller
+controller.updateLayout(layout);
+
+// Use item-based methods
+controller.jumpToItem(100);
+controller.animateToItem(200);
+final currentItem = controller.getCurrentCenterItemIndex();
+```
 
 ## API Reference
 
@@ -90,6 +121,7 @@ Creates a grid that cycles through the provided items infinitely.
 ```dart
 InfiniteGrid<T>({
   required InfiniteGridController controller,
+  required GridLayout layout,
   required List<T> items,
   required Widget Function(BuildContext, GridCellConfig, T) cellBuilder,
   GridPhysics? gridPhysics,
@@ -106,6 +138,7 @@ Creates a grid using a builder pattern, similar to ListView.builder.
 ```dart
 InfiniteGrid.builder({
   required InfiniteGridController controller,
+  required GridLayout layout,
   required int itemCount,
   required Widget Function(BuildContext, GridCellConfig, int) cellBuilder,
   GridPhysics? gridPhysics,
@@ -119,6 +152,7 @@ InfiniteGrid.builder({
 ```dart
 InfiniteGrid.builder(
   controller: controller,
+  layout: layout,
   itemCount: 100,
   cellBuilder: (context, config, index) => Container(
     decoration: BoxDecoration(
@@ -132,7 +166,8 @@ InfiniteGrid.builder(
 
 #### Properties
 
-- **`controller`**: Controller for programmatic control and layout configuration
+- **`controller`**: Controller for programmatic control
+- **`layout`**: Grid layout configuration (required)
 - **`items`**: List of items to display in the grid (required)
 - **`cellBuilder`**: Builder function for creating cell widgets (receives context, config, and item)
 - **`gridPhysics`**: Custom physics for scrolling behavior
@@ -156,7 +191,23 @@ class GridCellConfig {
 
 ### InfiniteGridController
 
-The controller provides methods for programmatic control of the grid:
+The controller provides methods for programmatic control of the grid. It supports a hybrid approach for layout management:
+
+#### Layout Management
+
+The controller uses a stored layout approach for item-based operations:
+
+```dart
+final controller = InfiniteGridController();
+controller.updateLayout(GridLayout(cellSize: 100, spacing: 4));
+
+// Now you can use item methods without passing layout
+controller.jumpToItem(100);
+controller.animateToItem(200);
+final currentItem = controller.getCurrentCenterItemIndex();
+```
+
+The widget automatically sets the layout on the controller for convenience.
 
 ```dart
 InfiniteGridController({
@@ -166,7 +217,7 @@ InfiniteGridController({
 ```
 
 - **`initialPosition`**: Starting position of the grid (default: origin at viewport center)
-- **`layout`**: Grid layout configuration for item-aware operations
+- **`layout`**: Optional grid layout configuration. If provided, it will be stored and used for item-based operations
 
 #### Factory Constructor
 
@@ -189,14 +240,17 @@ Creates a controller starting at a specific item index. The initial position is 
 - `animateBy(Offset delta, ...)` - Animate by a relative offset
 - `reset()` - Return to the origin (0, 0)
 
+#### Layout Management
+- `updateLayout(GridLayout? layout)` - Update the stored layout configuration
+
 #### Item-Based Methods
 - `jumpToItem(int itemIndex)` - Instantly move to a specific item
-- `animateToItem(int itemIndex, ...)` - Animate to a specific item
+- `animateToItem(int itemIndex, {...})` - Animate to a specific item
 - `getCurrentCenterItemIndex()` - Get the current center item index
 
 #### Properties
 - `currentPosition` - Current position as Offset
-- `layout` - Current grid layout configuration
+- `layout` - Current grid layout configuration (can be set)
 - `hasClients` - Whether the controller is attached to a widget
 
 ### GridLayout
@@ -208,6 +262,7 @@ Layout configuration for the grid:
 const GridLayout({
   required double cellSize,
   double spacing = 0.0,
+  double gridOffset = 0.0,
 })
 
 // Rectangular cells
@@ -215,6 +270,7 @@ const GridLayout.rectangular({
   required double cellWidth,
   required double cellHeight,
   double spacing = 0.0,
+  double gridOffset = 0.0,
 })
 ```
 
@@ -222,6 +278,38 @@ const GridLayout.rectangular({
 - **`cellWidth`**: Width of each cell in logical pixels (for rectangular cells)
 - **`cellHeight`**: Height of each cell in logical pixels (for rectangular cells)
 - **`spacing`**: Space between cells in logical pixels
+- **`gridOffset`**: Grid offset for staggered column effect (0.0 to 1.0, default: 0.0)
+  - 0.0: No offset (normal grid)
+  - 1.0: Quarter cell height offset per direction (total max: half cell height)
+  - Odd columns move up, even columns (including 0) move down by `gridOffset * (cellHeight / 4)`
+
+### Grid Offset
+
+The grid offset feature creates a staggered column effect where columns move in opposite directions. This creates a visually interesting layout similar to masonry grids.
+
+```dart
+// No offset (normal grid)
+const GridLayout(cellSize: 100, spacing: 4, gridOffset: 0.0)
+
+// 25% offset
+const GridLayout(cellSize: 100, spacing: 4, gridOffset: 0.25)
+
+// 50% offset (quarter cell height per direction)
+const GridLayout(cellSize: 100, spacing: 4, gridOffset: 0.5)
+
+// Full offset (quarter cell height per direction)
+const GridLayout(cellSize: 100, spacing: 4, gridOffset: 1.0)
+```
+
+The offset creates a balanced staggered effect:
+- Column 0: Moves down by `gridOffset * (cellHeight / 4)`
+- Column 1: Moves up by `gridOffset * (cellHeight / 4)`
+- Column -1: Moves up by `gridOffset * (cellHeight / 4)`
+- Column 2: Moves down by `gridOffset * (cellHeight / 4)`
+- Column -2: Moves down by `gridOffset * (cellHeight / 4)`
+- Column 3: Moves up by `gridOffset * (cellHeight / 4)`
+- Column -3: Moves up by `gridOffset * (cellHeight / 4)`
+- And so on...
 
 ### GridPhysics
 
@@ -262,13 +350,13 @@ class InfiniteGridDemo extends StatefulWidget {
 
 class _InfiniteGridDemoState extends State<InfiniteGridDemo> {
   late final InfiniteGridController _controller;
+  late final GridLayout _layout;
   
   @override
   void initState() {
     super.initState();
-    _controller = InfiniteGridController(
-      layout: const GridLayout(cellSize: 100, spacing: 4),
-    );
+    _controller = InfiniteGridController();
+    _layout = const GridLayout(cellSize: 100, spacing: 4);
   }
   
   @override
@@ -304,6 +392,7 @@ class _InfiniteGridDemoState extends State<InfiniteGridDemo> {
           Expanded(
             child: InfiniteGrid<String>(
               controller: _controller,
+              layout: _layout,
               items: items,
               cellBuilder: (context, config, item) => Container(
                 decoration: BoxDecoration(

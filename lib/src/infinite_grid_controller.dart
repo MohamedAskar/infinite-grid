@@ -1,20 +1,48 @@
 import 'dart:math' as math;
-
-import 'package:flutter/animation.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import 'grid_layout.dart';
 
+/// Animation request for smooth transitions.
+class AnimationRequest {
+  /// Creates a new animation request.
+  const AnimationRequest({
+    required this.targetPosition,
+    required this.duration,
+    required this.curve,
+  });
+
+  /// The target position to animate to.
+  final Offset targetPosition;
+
+  /// The duration of the animation.
+  final Duration duration;
+
+  /// The curve to use for the animation.
+  final Curve curve;
+}
+
 /// Controller for programmatic control of the infinite grid.
+///
+/// Provides methods for jumping to specific positions, animating to items,
+/// and managing the grid's current state.
 class InfiniteGridController extends ChangeNotifier {
   /// Creates a new infinite grid controller.
+  ///
+  /// The [initialPosition] determines where the grid starts. By default,
+  /// the grid starts at the origin (0, 0) which is positioned at the center
+  /// of the viewport.
+  ///
+  /// The [layout] parameter is optional. If provided, it will be stored
+  /// and used for item-based operations. If not provided, you must pass
+  /// the layout explicitly to item-based methods.
   InfiniteGridController({
     Offset initialPosition = const Offset(0, 0),
     GridLayout? layout,
-  }) : _position = initialPosition,
+  }) : _currentPosition = initialPosition,
        _layout = layout;
 
-  /// Creates a new infinite grid controller starting at a specific item.
+  /// Creates a controller starting at a specific item index.
   ///
   /// The initial position is calculated automatically based on the item index
   /// using the provided layout configuration.
@@ -22,26 +50,26 @@ class InfiniteGridController extends ChangeNotifier {
     required int initialItem,
     required GridLayout layout,
   }) {
-    final worldPosition = layout.calculateItemWorldPosition(initialItem);
+    final initialPosition = layout.calculateItemWorldPosition(initialItem);
     return InfiniteGridController(
-      initialPosition: -worldPosition,
+      initialPosition: initialPosition,
       layout: layout,
     );
   }
 
-  Offset _position;
-  GridLayout? _layout;
-
-  // Animation requests - the widget handles the actual animation
-  AnimationRequest? _pendingAnimation;
+  /// The current position of the grid.
+  Offset _currentPosition;
 
   /// The current position of the grid.
-  Offset get currentPosition => _position;
+  Offset get currentPosition => _currentPosition;
 
-  /// The current layout being used for item-aware operations.
+  /// The stored layout configuration for item-based operations.
+  GridLayout? _layout;
+
+  /// The current layout configuration, if set.
   GridLayout? get layout => _layout;
 
-  /// Sets the layout for item-aware operations.
+  /// Sets the layout configuration for item-based operations.
   set layout(GridLayout? layout) {
     if (_layout != layout) {
       _layout = layout;
@@ -49,49 +77,65 @@ class InfiniteGridController extends ChangeNotifier {
     }
   }
 
-  /// Gets any pending animation request and clears it.
+  /// Updates the layout configuration for item-based operations.
+  ///
+  /// This method is a convenient way to update the layout and notify listeners.
+  void updateLayout(GridLayout? layout) {
+    this.layout = layout;
+  }
+
+  /// Whether the controller is attached to a widget.
+  bool get hasClients => hasListeners;
+
+  /// Pending animation request, if any.
+  AnimationRequest? _pendingAnimation;
+
+  /// Takes and clears any pending animation request.
   AnimationRequest? takePendingAnimation() {
     final request = _pendingAnimation;
     _pendingAnimation = null;
     return request;
   }
 
-  /// Validates that a layout is set for item-aware operations.
-  void _ensureLayoutSet() {
-    if (_layout == null) {
-      throw StateError(
-        'GridLayout must be set before using item-aware methods. '
-        'Set controller.layout = GridLayout(cellSize: ..., spacing: ...) or GridLayout.rectangular(cellWidth: ..., cellHeight: ..., spacing: ...)',
-      );
-    }
-  }
-
   /// Updates the current position and notifies listeners.
-  void updatePosition(Offset newPosition) {
-    if (_position != newPosition) {
-      _position = newPosition;
+  void updatePosition(Offset position) {
+    if (_currentPosition != position) {
+      _currentPosition = position;
       notifyListeners();
     }
   }
 
-  /// Animates the grid to the specified position.
+  /// Instantly moves to the specified position.
+  void jumpTo(Offset position) {
+    updatePosition(position);
+  }
+
+  /// Animates to the specified position.
   void animateTo(
-    Offset targetPosition, {
+    Offset position, {
     Duration duration = const Duration(milliseconds: 300),
     Curve curve = Curves.easeInOut,
   }) {
     _pendingAnimation = AnimationRequest(
-      targetPosition: targetPosition,
+      targetPosition: position,
       duration: duration,
       curve: curve,
     );
     notifyListeners();
   }
 
-  /// Immediately jumps to the specified position without animation.
-  void jumpTo(Offset targetPosition) {
-    _pendingAnimation = null; // Cancel any pending animation
-    updatePosition(targetPosition);
+  /// Moves by the specified delta.
+  void moveBy(Offset delta) {
+    updatePosition(_currentPosition + delta);
+  }
+
+  /// Animates by the specified delta.
+  void animateBy(
+    Offset delta, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeInOut,
+  }) {
+    animateTo(_currentPosition + delta, duration: duration, curve: curve);
   }
 
   /// Resets the grid to the origin (0, 0).
@@ -99,99 +143,124 @@ class InfiniteGridController extends ChangeNotifier {
     jumpTo(const Offset(0, 0));
   }
 
-  /// Moves the grid by the specified offset.
-  void moveBy(Offset delta) {
-    updatePosition(_position + delta);
-  }
-
-  /// Animates the grid by the specified offset.
-  void animateBy(
-    Offset delta, {
-    Duration duration = const Duration(milliseconds: 300),
-    Curve curve = Curves.easeInOut,
-  }) {
-    animateTo(_position + delta, duration: duration, curve: curve);
-  }
-
-  /// Converts a linear item index to grid coordinates (x, y).
+  /// Instantly moves to the specified item index.
   ///
-  /// Items are arranged in a spiral pattern starting from the center (0, 0).
-  /// Item 0 is at (0, 0), item 1 is at (1, 0), item 2 is at (1, -1), etc.
-  ///
-  /// The spiral pattern follows: right, down, left, up, expanding outward.
-  math.Point<int> itemIndexToGridPosition(int itemIndex) {
-    _ensureLayoutSet();
-    return _layout!.itemIndexToGridPosition(itemIndex);
-  }
-
-  /// Converts grid coordinates (x, y) to a linear item index.
-  ///
-  /// This matches the _calculateGridIndex method in the grid widget.
-  int gridPositionToItemIndex(math.Point<int> gridPosition) {
-    _ensureLayoutSet();
-    return _layout!.gridPositionToItemIndex(gridPosition);
-  }
-
-  /// Calculates the world position for a given item index.
-  ///
-  /// Uses the controller's stored cell size and spacing values.
-  Offset calculateItemWorldPosition(int itemIndex) {
-    _ensureLayoutSet();
-    return _layout!.calculateItemWorldPosition(itemIndex);
-  }
-
-  /// Jumps to a specific item by its index.
-  ///
-  /// The item will be centered on the screen.
-  /// Uses the controller's stored layout.
+  /// Requires a layout to be set on the controller using [updateLayout].
   void jumpToItem(int itemIndex) {
-    final worldPosition = calculateItemWorldPosition(itemIndex);
-    jumpTo(-worldPosition);
+    if (_layout == null) {
+      throw StateError(
+        'GridLayout must be set on the controller before using item-aware methods. '
+        'Call controller.updateLayout(GridLayout(cellSize: ..., spacing: ...)) first.',
+      );
+    }
+
+    final gridPos = _layout!.itemIndexToGridPosition(itemIndex);
+    final columnOffset = calculateColumnOffset(gridPos.x);
+    final basePosition = calculateBaseGridPosition(gridPos.x, gridPos.y);
+    final compensatedPosition = compensateForVisualCenter(
+      basePosition,
+      columnOffset,
+    );
+
+    jumpTo(compensatedPosition);
   }
 
-  /// Animates to a specific item by its index.
+  /// Animates to the specified item index.
   ///
-  /// The item will be centered on the screen.
-  /// Uses the controller's stored layout.
+  /// Requires a layout to be set on the controller using [updateLayout].
   void animateToItem(
     int itemIndex, {
     Duration duration = const Duration(milliseconds: 300),
     Curve curve = Curves.easeInOut,
   }) {
-    final worldPosition = calculateItemWorldPosition(itemIndex);
-    animateTo(-worldPosition, duration: duration, curve: curve);
+    if (_layout == null) {
+      throw StateError(
+        'GridLayout must be set on the controller before using item-aware methods. '
+        'Call controller.updateLayout(GridLayout(cellSize: ..., spacing: ...)) first.',
+      );
+    }
+
+    final gridPos = _layout!.itemIndexToGridPosition(itemIndex);
+    final columnOffset = calculateColumnOffset(gridPos.x);
+    final basePosition = calculateBaseGridPosition(gridPos.x, gridPos.y);
+    final compensatedPosition = compensateForVisualCenter(
+      basePosition,
+      columnOffset,
+    );
+
+    animateTo(compensatedPosition, duration: duration, curve: curve);
   }
 
-  /// Gets the currently visible item index at the center of the screen.
+  /// Gets the current center item index.
   ///
-  /// Uses the controller's stored layout.
-  /// This is useful for knowing which item is currently in focus.
+  /// Requires a layout to be set on the controller using [updateLayout].
   int getCurrentCenterItemIndex() {
-    _ensureLayoutSet();
-    return _layout!.gridPositionToItemIndex(
-      math.Point<int>(
-        (-_position.dx / _layout!.effectiveCellWidth).round(),
-        (-_position.dy / _layout!.effectiveCellHeight).round(),
-      ),
+    if (_layout == null) {
+      throw StateError(
+        'GridLayout must be set on the controller before using item-aware methods. '
+        'Call controller.updateLayout(GridLayout(cellSize: ..., spacing: ...)) first.',
+      );
+    }
+
+    final gridX = (_currentPosition.dx / _layout!.effectiveCellWidth).round();
+    final columnOffset = calculateColumnOffset(gridX);
+    final adjustedY = _currentPosition.dy + columnOffset;
+    final gridY = (adjustedY / _layout!.effectiveCellHeight).round();
+
+    return _layout!.gridPositionToItemIndex(math.Point<int>(gridX, gridY));
+  }
+
+  @override
+  void dispose() {
+    _pendingAnimation = null;
+    super.dispose();
+  }
+
+  /// Calculates the column offset for the given grid X coordinate.
+  ///
+  /// Odd columns move up, even columns move down.
+  /// This creates a staggered effect where adjacent columns are offset
+  /// in opposite directions.
+  ///
+  /// [gridX] - The grid X coordinate (column number)
+  ///
+  /// Returns the Y offset for the column (positive for even columns, negative for odd columns)
+  double calculateColumnOffset(int gridX) {
+    final isOddColumn = gridX.abs() % 2 == 1;
+    final offset = _layout!.gridOffset * _layout!.cellHeight / 4;
+
+    return isOddColumn
+        ? -offset // Odd columns move up
+        : offset; // Even columns move down
+  }
+
+  /// Calculates the base grid position without any offset compensation.
+  ///
+  /// Converts grid coordinates to world coordinates without applying
+  /// any column offset adjustments.
+  ///
+  /// [gridX] - The grid X coordinate
+  /// [gridY] - The grid Y coordinate
+  ///
+  /// Returns the base world position for the grid coordinates
+  Offset calculateBaseGridPosition(int gridX, int gridY) {
+    return Offset(
+      gridX * _layout!.effectiveCellWidth,
+      gridY * _layout!.effectiveCellHeight,
     );
   }
 
-  /// Disposes of the controller and cleans up resources.
-  @override
-  void dispose() {
-    super.dispose();
+  /// Compensates the base position for visual center offset.
+  ///
+  /// This ensures items appear centered in the viewport by accounting
+  /// for the staggered column effect. The compensation is the inverse
+  /// of the column offset.
+  ///
+  /// [basePosition] - The base grid position
+  /// [columnOffset] - The column offset to compensate for
+  ///
+  /// Returns the compensated position that centers the item in the viewport
+  Offset compensateForVisualCenter(Offset basePosition, double columnOffset) {
+    return Offset(basePosition.dx, basePosition.dy - columnOffset);
   }
-}
-
-/// Represents a pending animation request.
-class AnimationRequest {
-  const AnimationRequest({
-    required this.targetPosition,
-    required this.duration,
-    required this.curve,
-  });
-
-  final Offset targetPosition;
-  final Duration duration;
-  final Curve curve;
 }
