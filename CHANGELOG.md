@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2024-12-19
+
+### Added
+- **GitHub Actions CI/CD**: Automated pull request validation
+  - Automated code analysis, testing, and formatting checks
+  - Branch protection rules for code quality
+  - Repository owner-only merge permissions
+
+### Improved
+- **Documentation**: Enhanced README with status badges and demo sections
+  - Added pub package, codecov, and style analysis badges
+  - Updated demo section with side-by-side comparisons
+  - Better showcase of grid offset and scrolling features
+
+## [1.2.0] - 2024-12-19
+
+### Added
+- **Grid Offset Feature**: Staggered column effects for masonry-style layouts
+  - `gridOffset` parameter in `GridLayout` (0.0 to 1.0, default: 0.0)
+  - `withGridOffset()` method for easy offset updates
+  - Interactive grid offset slider in example app
+
+### Changed
+- **Staggered Grid Behavior**: Odd columns move up, even columns move down
+  - Maximum shift: quarter cell height per direction (total max: half cell height)
+  - Creates balanced and visually appealing staggered effect
+
+### Fixed
+- **Item Centering**: Fixed positioning issues when grid offset is applied
+  - `jumpToItem()` and `animateToItem()` now correctly center items
+  - `getCurrentCenterItemIndex()` accounts for staggered column offsets
+  - Proper coordinate system compensation for visual center
+
+### Improved
+- **Code Architecture**: Centralized grid calculations in controller
+  - Single source of truth for all offset and position calculations
+  - Widget delegates to controller: `_controller.calculateColumnOffset(x)`
+  - Cleaner separation of concerns and better maintainability
+- **API Design**: Enhanced method signatures with named parameters
+  - Improved readability for methods with multiple arguments
+  - Self-documenting method calls eliminate parameter confusion
+
 **First public release on pub.dev.**
 
 > _Note: Earlier versions were not published to pub.dev. This release includes all features and improvements listed below._
@@ -60,51 +102,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All grids now cycle through items infinitely - no more dual-mode behavior
 - Improved API consistency by having a single constructor that always works with items
 - Enhanced type safety by requiring items and providing strongly-typed access in cellBuilder
-- Removed deprecated `cellSize` and `effectiveCellSize` properties from `GridLayout`
-- Removed deprecated `cellSize` property from `GridCellConfig`
-- Default `enableMomentumScrolling` is now `false` for direct drag control
-- Implemented ring-based counter-clockwise spiral indexing pattern for grid cells
-- Optimized rendering with viewport-based cell culling
-- Efficient memory management with automatic cell recycling
-- Cross-platform touch and mouse support
-- Customizable physics for momentum scrolling
-- Programmatic navigation with animation support
-- Fixed duplicate key issue in grid rendering with proper spiral indexing algorithm
-- Ensured all grid cells have unique keys for proper Flutter widget management
-
-### Removed
-- Removed `InfiniteGrid.builder()` constructor
-- Removed optional `items` parameter from main constructor
-- Removed nullable `T?` item parameter from cellBuilder
-- Removed dual-mode logic for handling grids with and without items
-- Removed `cellSize` and `spacing` parameters from `InfiniteGrid` widget constructor
-- Repetitive `cellSize` and `spacing` parameters from controller methods by using `GridLayout` approach
-
-### Improved
-- Clean API: Item-aware methods require no parameters (use internal layout)
-- Immutable design: GridLayout is immutable and stateless
-- Better separation: Controller handles positions, layout handles item calculations
-- Type safety: Uses proper Point<int> types from dart:math
-- Flexible usage: Layout can be used independently or with controller
-- Single source of truth: Controller's layout defines all cell and spacing configuration
-- Flutter-native API: Animation methods now work exactly like ScrollController (no manual vsync parameter required)
-- Proper architecture: Controller provides interface, widget handles implementation (follows Flutter patterns)
-- Items are indexed in a spiral pattern starting from center (0, 0)
-- Spiral follows: right → down → left → up → expanding outward
-- Layout is immutable and can be reused across multiple controllers
-- All methods properly account for cell size and spacing internally
-- Round-trip conversions between indices and positions are guaranteed
-- No auto-sync or state management complexity
-- High-performance rendering with only visible cells
-- Infinite scrolling with constant memory usage
-- Smooth touch interactions with momentum
-- Customizable physics for scroll behavior
-- Programmatic control with animations
-- Position tracking callbacks
-- Viewport margin configuration
-- Cell recycling for optimal performance
-- Comprehensive README with examples
-- API documentation for all classes
-- Performance optimization guidelines
-- Platform-specific considerations
-- Usage examples and best practices
+- Removed deprecated `

@@ -7,15 +7,19 @@ class GridLayout {
   /// Creates a new grid layout with square cells.
   ///
   /// For rectangular cells, use [GridLayout.rectangular].
-  const GridLayout({required double cellSize, required this.spacing})
-    : cellWidth = cellSize,
-      cellHeight = cellSize;
+  const GridLayout({
+    required double cellSize,
+    required this.spacing,
+    this.gridOffset = 0.0,
+  }) : cellWidth = cellSize,
+       cellHeight = cellSize;
 
   /// Creates a new grid layout with rectangular cells.
   const GridLayout.rectangular({
     required this.cellWidth,
     required this.cellHeight,
     required this.spacing,
+    this.gridOffset = 0.0,
   });
 
   /// The width of each cell in the grid.
@@ -26,6 +30,16 @@ class GridLayout {
 
   /// The spacing between cells in the grid.
   final double spacing;
+
+  /// The grid offset that shifts columns vertically.
+  ///
+  /// A value between 0.0 and 1.0, where:
+  /// - 0.0 means no offset (normal grid)
+  /// - 1.0 means half of the cell height offset
+  ///
+  /// Each column is offset by `gridOffset * (cellHeight / 2) * columnIndex` to create
+  /// a staggered effect. The maximum offset is limited to half the cell height.
+  final double gridOffset;
 
   /// The effective cell width including spacing.
   double get effectiveCellWidth => cellWidth + spacing;
@@ -169,59 +183,37 @@ class GridLayout {
   Offset calculateItemWorldPosition(int itemIndex) {
     final gridPos = itemIndexToGridPosition(itemIndex);
 
+    // Apply grid offset to create staggered effect
+    // Odd columns move up, even columns (including 0) move down
+    // Maximum shift is quarter cell height per direction (total max: half cell height)
+    final isOddColumn = gridPos.x.abs() % 2 == 1;
+    final columnOffset = isOddColumn
+        ? -gridOffset *
+              (cellHeight / 4) // Odd columns move up (negative)
+        : gridOffset * (cellHeight / 4); // Even columns move down (positive)
+
     return Offset(
       gridPos.x * effectiveCellWidth,
-      gridPos.y * effectiveCellHeight,
+      gridPos.y * effectiveCellHeight + columnOffset,
     );
   }
 
   /// Gets the item index at the given world position.
   int getItemIndexAtWorldPosition(Offset worldPosition) {
     final gridX = (worldPosition.dx / effectiveCellWidth).round();
-    final gridY = (worldPosition.dy / effectiveCellHeight).round();
+
+    // Remove the offset from the Y position before converting to grid coordinates
+    // We need to reverse the offset calculation that was applied in calculateItemWorldPosition
+    final isOddColumn = gridX.abs() % 2 == 1;
+    final columnOffset = isOddColumn
+        ? -gridOffset *
+              (cellHeight / 4) // Odd columns move up (negative)
+        : gridOffset * (cellHeight / 4); // Even columns move down (positive)
+
+    final adjustedY = worldPosition.dy - columnOffset;
+    final gridY = (adjustedY / effectiveCellHeight).round();
 
     return gridPositionToItemIndex(math.Point<int>(gridX, gridY));
-  }
-
-  /// Creates a new layout with different cell size (for square cells).
-  GridLayout withCellSize(double cellSize) {
-    return GridLayout(cellSize: cellSize, spacing: spacing);
-  }
-
-  /// Creates a new layout with different cell dimensions (for rectangular cells).
-  GridLayout withCellDimensions(double cellWidth, double cellHeight) {
-    return GridLayout.rectangular(
-      cellWidth: cellWidth,
-      cellHeight: cellHeight,
-      spacing: spacing,
-    );
-  }
-
-  /// Creates a new layout with different spacing.
-  GridLayout withSpacing(double spacing) {
-    return GridLayout.rectangular(
-      cellWidth: cellWidth,
-      cellHeight: cellHeight,
-      spacing: spacing,
-    );
-  }
-
-  /// Creates a new layout with different cell size and spacing (for square cells).
-  GridLayout withConfiguration(double cellSize, double spacing) {
-    return GridLayout(cellSize: cellSize, spacing: spacing);
-  }
-
-  /// Creates a new layout with different cell dimensions and spacing (for rectangular cells).
-  GridLayout withRectangularConfiguration(
-    double cellWidth,
-    double cellHeight,
-    double spacing,
-  ) {
-    return GridLayout.rectangular(
-      cellWidth: cellWidth,
-      cellHeight: cellHeight,
-      spacing: spacing,
-    );
   }
 
   @override
@@ -231,17 +223,32 @@ class GridLayout {
           runtimeType == other.runtimeType &&
           cellWidth == other.cellWidth &&
           cellHeight == other.cellHeight &&
-          spacing == other.spacing;
+          spacing == other.spacing &&
+          gridOffset == other.gridOffset;
 
   @override
-  int get hashCode => Object.hash(cellWidth, cellHeight, spacing);
+  int get hashCode => Object.hash(cellWidth, cellHeight, spacing, gridOffset);
 
   @override
   String toString() {
     if (cellWidth == cellHeight) {
-      return 'GridLayout(cellSize: $cellWidth, spacing: $spacing)';
+      return 'GridLayout(cellSize: $cellWidth, spacing: $spacing, gridOffset: $gridOffset)';
     } else {
-      return 'GridLayout.rectangular(cellWidth: $cellWidth, cellHeight: $cellHeight, spacing: $spacing)';
+      return 'GridLayout.rectangular(cellWidth: $cellWidth, cellHeight: $cellHeight, spacing: $spacing, gridOffset: $gridOffset)';
     }
+  }
+
+  GridLayout copyWith({
+    double? cellWidth,
+    double? cellHeight,
+    double? spacing,
+    double? gridOffset,
+  }) {
+    return GridLayout.rectangular(
+      cellWidth: cellWidth ?? this.cellWidth,
+      cellHeight: cellHeight ?? this.cellHeight,
+      spacing: spacing ?? this.spacing,
+      gridOffset: gridOffset ?? this.gridOffset,
+    );
   }
 }
