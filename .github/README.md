@@ -13,12 +13,7 @@ Automatically runs on pull requests and pushes to main/master branches to ensure
 - Direct pushes to main/master
 
 **Jobs:**
-1. **Validate Code** - Main package validation
-   - Flutter analyze
-   - Flutter test
-   - Dart format check
-
-2. **Validate Example App** - Example app validation
+1. **Validate Package** - Main package validation
    - Flutter analyze
    - Flutter test
    - Dart format check
@@ -33,6 +28,7 @@ Manually triggered workflow to set up branch protection rules for the main branc
 - Dismisses stale reviews
 - Prevents force pushes and deletions
 - Enforces strict status checks
+- **Only repository owner can merge pull requests**
 
 ## Usage
 
@@ -43,17 +39,19 @@ Manually triggered workflow to set up branch protection rules for the main branc
 3. Create a pull request
 4. The workflows will automatically run
 5. All checks must pass before merging
+6. **Only the repository owner can merge the PR**
 
 ### For Repository Owners
 
 1. Go to Actions tab
 2. Run the "Branch Protection Setup" workflow manually
 3. This will configure protection rules for the main branch
+4. You will be the only one who can merge pull requests
 
 ## Requirements
 
-- Flutter 3.24.0 or higher
+- Flutter 3.32.7 or higher
 - All tests must pass
 - No analyzer warnings
 - Code must be properly formatted
-- Example app must also pass all checks 
+- Only the repository owner can merge pull requests 
