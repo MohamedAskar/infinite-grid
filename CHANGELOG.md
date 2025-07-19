@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2024-12-19
+
+### Fixed
+- **pub.dev Compatibility**: Fixed README assets display issues
+  - Replaced GitHub user-attachments URLs with local assets
+  - Added assets folder with demo images and GIFs
+  - Fixed image loading on pub.dev package page
+  - Improved README display across all platforms
+
 ## [1.2.1] - 2024-12-19
 
 ### Added
