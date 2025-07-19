@@ -9,7 +9,7 @@ A high-performance Flutter package that implements an infinite scrolling grid UI
 ### Layout Comparison
 |                                                 Default Layout                                                    |                                                  Grid Offset Layout                                                   |
 | :---------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: |
-| <img alt="Default Layout" src="https://github.com/user-attachments/assets/29da54aa-18aa-431b-9519-953c40124ba3"/> | <img alt="Grid Offset Layout" src="https://github.com/user-attachments/assets/4008a878-2f90-443f-ab95-655e22cf3ce9"/> |
+| ![Default Layout](assets/default.png) | ![Grid Offset Layout](assets/offset.png) |
 
 
 
@@ -17,7 +17,7 @@ A high-performance Flutter package that implements an infinite scrolling grid UI
 ### Scrolling Comparison
 |                                             Normal Scrolling                                                        |                                                 Momentum Scrolling                                                    |
 | :-----------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------: |
-| <img alt="Normal Scrolling" src="https://github.com/user-attachments/assets/16a8df38-afe9-45c5-bbc9-9c0b5d620533"/> | <img alt="Momentum Scrolling" src="https://github.com/user-attachments/assets/89d5bd2c-32e9-488e-a230-8236bd8ac527"/> |
+| ![Normal Scrolling](assets/normal-scrolling.gif) | ![Momentum Scrolling](assets/momentum-scrolling.gif) |
 
 
 
